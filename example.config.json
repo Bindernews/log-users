@@ -1,0 +1,11 @@
+{
+    "database": "db.sqlite3",
+    "username": "your_username",
+    "keyfile": "/path/to/ssh/key",
+    "period": "1200",
+    "timezone": 5,
+    "servers": [
+        "server1.example.com",
+        "server2.example.com"
+    ]
+}

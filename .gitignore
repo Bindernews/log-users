@@ -1,0 +1,11 @@
+# Test files
+db.sqlite3
+config.json
+host_cache
+
+# Development files
+dev_stuff/
+
+# IDE files
+.idea/
+*.iml
