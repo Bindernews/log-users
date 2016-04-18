@@ -42,7 +42,7 @@ SERVER_COMMAND = ['last', '-wF']
 # eg. msm7155  pts/12       72.230.234.95    Wed Feb 17 19:53:48 2016 - Wed Feb 17 19:57:56 2016  (00:04)
 # eg. ach3628  pts/12       129.21.82.30     Thu Feb 18 04:46:15 2016   still logged in
 LAST_REGEX = re.compile(
-    r'([A-Za-z0-9]+) .+? ([0-9a-z:\.]+) +([A-Za-z0-9: ]+) \-? ([A-Za-z0-9: ]+)(?:\(([0-9]\+)?([0-9]{2}\:[0-9]{2})\))?')
+    r'([^\s]+) .+? ([0-9a-z:\.]+) +([A-Za-z0-9: ]+) \-? ([A-Za-z0-9: ]+)(?:\(([0-9]\+)?([0-9]{2}\:[0-9]{2})\))?')
 
 # Regex to check for users who are logged in locally.
 # eg: :0, :5
@@ -50,8 +50,8 @@ LOCAL_LOGIN_REGEX = re.compile(r'\:[0-9]+')
 
 # Query used for creating the database
 QUERY_DATABASE_INIT = """CREATE TABLE IF NOT EXISTS '%s' (
-id INTEGER PRIMARY KEY, hostname VARCHAR(128), username VARCHAR(255),
-source VARCHAR(128), login DATETIME, duration UNSIGNED BIGINT)""" % RECORD_TABLE
+id INTEGER PRIMARY KEY, hostname VARCHAR(255), username VARCHAR(255),
+source VARCHAR(255), login DATETIME, duration UNSIGNED BIGINT)""" % RECORD_TABLE
 # Query to find the most recent query from each hostname
 QUERY_SELECT_MOST_RECENT = """SELECT hostname, MAX(login) login FROM {0}
 GROUP BY hostname""".format(RECORD_TABLE)
@@ -273,6 +273,12 @@ class Recorder:
         """Run the collector.
         :param self: A reference to the current object.
         """
+        # Schedule the task to run again. If we do this at the end of the
+        # method the timer will basically drift by however long it takes to
+        # collect the data.
+        if self.collecting:
+            self._schedule_collection()
+
         # Get the start time
         start_time = time.time()
 
@@ -295,10 +301,6 @@ class Recorder:
             self.sql_insert_queue.task_done()
         # And commit the changes to the SQL database
         self.conn.commit()
-
-        # Now schedule the task again for later
-        if self.collecting:
-            self._schedule_collection()
 
         time_taken = '{:.4f}'.format(time.time() - start_time)
         print('Collected data', time_taken, 'seconds', flush=True)
