@@ -56,7 +56,9 @@ def main(dbfile, datafile):
     for tup in rows:
         rec = Record.from_tuple(tup)  # Create a record object
         week = get_week(rec.login)    # Get the week it's from
-        by_week_server[str(week)][rec.hostname].append(str(rec.login)) # Now add it to the pile
+        # The value is a list [weekday, hour]
+        value = str(rec.login)   # use rec.login for the full date
+        by_week_server[str(week)][rec.hostname].append(value) # Now add it to the pile
 
     with open(datafile, "w") as fd:
         json.dump(by_week_server, fd)
